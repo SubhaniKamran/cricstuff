@@ -1,14 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const Message = require("../../models/Message");
+const { protect } = require("../../middleware");
 
-router.post("/:senderid/:receiverid", async (req, res) => {
+router.post("/:receiverid", protect, async (req, res) => {
   const { body } = req.body;
+  console.log(req.headers.authorization.startsWith("Bearer"));
 
   const message = await Message.create({
     body,
     receiver: req.params.receiverid,
-    sender: req.params.senderid
+    sender: req.user.id
   });
   res.status(200).json({ success: true, message: message });
 });
@@ -17,11 +19,14 @@ router.post("/:senderid/:receiverid", async (req, res) => {
           { $or: [{a: 1}, {b: 1}] },
           { $or: [{c: 1}, {d: 1}] }
       ] */
-router.get("/:senderid/:receiverid", async (req, res) => {
-  senderid= req.params.senderid;
-  receiverid= req.params.receiverid 
+router.get("/:receiverid", protect, async (req, res) => {
+  senderid = req.user.id;
+  receiverid = req.params.receiverid;
   const chat = await Message.find({
-    $or: [{$and:[{ sender: senderid }, { receiver: receiverid }]},{$and:[{ sender: receiverid }, { receiver: senderid }]}]
+    $or: [
+      { $and: [{ sender: senderid }, { receiver: receiverid }] },
+      { $and: [{ sender: receiverid }, { receiver: senderid }] }
+    ]
   }).sort({ createdat: -1 });
 
   res.status(200).json({ success: true, chat: chat });

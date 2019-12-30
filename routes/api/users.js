@@ -2,7 +2,7 @@ const path = require("path");
 const express = require("express");
 const router = express.Router();
 const User = require("../../models/User");
-
+const { sendTokenResponse, protect } = require("../../middleware");
 // @route POST api/users/register
 // @desc Register user
 // @access Public
@@ -29,7 +29,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.put("/upload/:id", async (req, res) => {
+router.put("/upload/:id", protect, async (req, res) => {
   if (!req.files) {
     return res
       .status(400)
@@ -87,8 +87,7 @@ router.post("/login", async (req, res) => {
       .json({ success: false, message: "Invalid credentials" });
   }
 
-  const token = user.getSignedToken();
-  res.status(200).json({ success: true, token: token, id: user.id });
+  sendTokenResponse(user, 200, res);
 });
 
 module.exports = router;
